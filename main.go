@@ -16,14 +16,14 @@ type Config struct {
 	Host      string
 }
 
-// OpenfireSession ... Retrieve Session Datas
+// OpenfireSession ... Retrieve Session datas
 type OpenfireSession struct {
 	Session OpenfireDatas `json:"session"`
 }
 
-// OpenfireSessions ... Retrieve Sessions Datas
+// OpenfireSession ... Retrieve All Sessions Datas
 type OpenfireSessions struct {
-	Session []OpenfireDatas `json:"session"`
+	Sessions []OpenfireDatas `json:"session"`
 }
 
 // OpenfireDatas ... Retrieve Sessions Fields
@@ -46,19 +46,20 @@ var (
 	httpClient = &http.Client{}
 	arguments  = os.Args
 	config     = Config{}
-	proto      string
 )
 
 func init() {
 	if _, err := os.Stat(os.ExpandEnv("$HOME") + "/.config/comecfg.json"); err != nil {
-		fmt.Fprint(os.Stdout, "No configuration found.\nTo use 'come' you must have a functional OpenFire Server\nWith REST API plugin installed.\n")
-		fmt.Printf("openfire server address (format needed: 'http(s)://host(:port)': ")
-		buf := bufio.NewScanner(os.Stdin)
-		buf.Scan()
-		hostname := buf.Text()
-		fmt.Printf("openfire server API Secret Key: ")
-		buf.Scan()
-		token := buf.Text()
+		fmt.Fprint(os.Stdout, "No configuration found."+
+			"\nTo use 'come' you must have a functional OpenFire Server\n"+
+			"With REST API plugin installed.\n")
+		fmt.Print("openfire server address (format needed: 'http(s)://host(:port)': ")
+		entry := bufio.NewScanner(os.Stdin)
+		entry.Scan()
+		hostname := entry.Text()
+		fmt.Print("openfire server API Secret Key: ")
+		entry.Scan()
+		token := entry.Text()
 		f, err := os.OpenFile(os.ExpandEnv("$HOME")+"/.config/comecfg.json", os.O_CREATE|os.O_WRONLY, 0664)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Could not write configuration: %v\n", err)
@@ -67,11 +68,11 @@ func init() {
 			FireToken: token,
 			Host:      hostname,
 		}
-		newconfig, err := json.Marshal(&config)
+		newConfig, err := json.Marshal(&config)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Could not write configuration: %v\n", err)
 		}
-		f.Write(newconfig)
+		f.Write(newConfig)
 		f.Close()
 		fmt.Println("Configuration created in " + os.ExpandEnv("$HOME") + "/.config/comecfg.json")
 	}
@@ -108,13 +109,13 @@ func listSessions() error {
 		return err
 	}
 	json.Unmarshal(body, &openfireSessions)
-	for _, v := range openfireSessions.Session {
+	for _, v := range openfireSessions.Sessions {
 		fmt.Println(v.Username, v.HostAddress)
 	}
 	return nil
 }
 
-func connectMachine(userid string) (string, error) {
+func sshConnect(userid string) (string, error) {
 	openfireSession := OpenfireSession{}
 	req, err := http.NewRequest("GET", config.Host+"/plugins/restapi/v1/sessions/"+userid, nil)
 	req.Header.Add("Accept", "application/json")
@@ -138,12 +139,22 @@ func connectMachine(userid string) (string, error) {
 
 func main() {
 	if len(arguments) < 2 {
-		fmt.Println("Usage: come [ARGUMENT] [USER]\n-c ou c    SSH connection to a user machine, ex: come -c <user>\n-i ou i    Display User IP Address, ex: come -i <user>\n-w ou w    Wait for user Online status, ex: come -w <user>\n-l ou l    Display active sessions list (format: User IP)\n-h ou h    This help")
+		fmt.Println("Usage: come [ARGUMENT] [USER]\n" +
+			"-c ou c    SSH connection to a user machine, ex: come -c <user>\n" +
+			"-i ou i    Display User IP Address, ex: come -i <user>\n" +
+			"-w ou w    Wait for user Online status, ex: come -w <user>\n" +
+			"-l ou l    Display active sessions list (format: User IP)\n" +
+			"-h ou h    This help")
 	} else if len(arguments) > 3 {
 		fmt.Println("Too much parameters")
 	} else if len(arguments) == 2 {
 		if arguments[1] == "-h" || arguments[1] == "h" {
-			fmt.Println("Usage: come [ARGUMENT] [USER]\n-c ou c    SSH connection to a user machine, ex: come -c <user>\n-i ou i    Display User IP Address, ex: come -i <user>\n-w ou w    Wait for user Online status, ex: come -w <user>\n-l ou l    Display active sessions list (format: User IP)\n-h ou h    This help")
+			fmt.Println("Usage: come [ARGUMENT] [USER]\n" +
+				"-c ou c    SSH connection to a user machine, ex: come -c <user>\n" +
+				"-i ou i    Display User IP Address, ex: come -i <user>\n" +
+				"-w ou w    Wait for user Online status, ex: come -w <user>\n" +
+				"-l ou l    Display active sessions list (format: User IP)\n" +
+				"-h ou h    This help")
 		} else if arguments[1] == "-l" || arguments[1] == "l" {
 			err := listSessions()
 			if err != nil {
@@ -154,7 +165,7 @@ func main() {
 		}
 	} else if len(arguments) == 3 {
 		if arguments[1] == "-c" || arguments[1] == "c" {
-			ip, err := connectMachine(arguments[2])
+			ip, err := sshConnect(arguments[2])
 			if err != nil {
 				fmt.Printf("Unable to establish connection: %v", err)
 			}
@@ -168,7 +179,7 @@ func main() {
 		} else if arguments[1] == "-w" || arguments[1] == "w" {
 			fmt.Println("Waiting for User Online Status...")
 			for {
-				ip, err := connectMachine(arguments[2])
+				ip, err := sshConnect(arguments[2])
 				if err != nil {
 					fmt.Printf("%v", err)
 				}
@@ -178,7 +189,7 @@ func main() {
 			}
 			fmt.Println(arguments[2] + ": ONLINE")
 		} else if arguments[1] == "-i" || arguments[1] == "i" {
-			ip, err := connectMachine(arguments[2])
+			ip, err := sshConnect(arguments[2])
 			if err != nil {
 				fmt.Printf("Unable to obtain IP address: %v", err)
 			}
