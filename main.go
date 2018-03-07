@@ -143,7 +143,8 @@ func main() {
 			"-c ou c    SSH connection to a user machine, ex: come -c <user>\n" +
 			"-i ou i    Display User IP Address, ex: come -i <user>\n" +
 			"-w ou w    Wait for user Online status, ex: come -w <user>\n" +
-			"-l ou l    Display active sessions list (format: User IP)\n" +
+			"-l ou l    Display active sessions list\n" +
+			"-v ou v    Print Version\n" +
 			"-h ou h    This help")
 	} else if len(arguments) > 3 {
 		fmt.Println("Too much parameters")
@@ -153,8 +154,11 @@ func main() {
 				"-c ou c    SSH connection to a user machine, ex: come -c <user>\n" +
 				"-i ou i    Display User IP Address, ex: come -i <user>\n" +
 				"-w ou w    Wait for user Online status, ex: come -w <user>\n" +
-				"-l ou l    Display active sessions list (format: User IP)\n" +
+				"-l ou l    Display active sessions list\n" +
+				"-v ou v    Print Version\n" +
 				"-h ou h    This help")
+		} else if arguments[1] == "-v" || arguments[1] == "v" {
+			fmt.Println("COME (COnnect ME) - version: 1.1")
 		} else if arguments[1] == "-l" || arguments[1] == "l" {
 			err := listSessions()
 			if err != nil {
