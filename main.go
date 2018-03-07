@@ -46,6 +46,13 @@ var (
 	httpClient = &http.Client{}
 	arguments  = os.Args
 	config     = Config{}
+	usageTxt   = "Usage: come [ARGUMENT] [USER]\n" +
+		"-c ou c    SSH connection to a user machine, ex: come -c <user>\n" +
+		"-i ou i    Display User IP Address, ex: come -i <user>\n" +
+		"-w ou w    Wait for user Online status, ex: come -w <user>\n" +
+		"-l ou l    Display active sessions list\n" +
+		"-v ou v    Print Version\n" +
+		"-h ou h    This help"
 )
 
 func init() {
@@ -139,24 +146,12 @@ func sshConnect(userid string) (string, error) {
 
 func main() {
 	if len(arguments) < 2 {
-		fmt.Println("Usage: come [ARGUMENT] [USER]\n" +
-			"-c ou c    SSH connection to a user machine, ex: come -c <user>\n" +
-			"-i ou i    Display User IP Address, ex: come -i <user>\n" +
-			"-w ou w    Wait for user Online status, ex: come -w <user>\n" +
-			"-l ou l    Display active sessions list\n" +
-			"-v ou v    Print Version\n" +
-			"-h ou h    This help")
+		fmt.Println(usageTxt)
 	} else if len(arguments) > 3 {
 		fmt.Println("Too much parameters")
 	} else if len(arguments) == 2 {
 		if arguments[1] == "-h" || arguments[1] == "h" {
-			fmt.Println("Usage: come [ARGUMENT] [USER]\n" +
-				"-c ou c    SSH connection to a user machine, ex: come -c <user>\n" +
-				"-i ou i    Display User IP Address, ex: come -i <user>\n" +
-				"-w ou w    Wait for user Online status, ex: come -w <user>\n" +
-				"-l ou l    Display active sessions list\n" +
-				"-v ou v    Print Version\n" +
-				"-h ou h    This help")
+			fmt.Println(usageTxt)
 		} else if arguments[1] == "-v" || arguments[1] == "v" {
 			fmt.Println("COME (COnnect ME) - version: 1.1")
 		} else if arguments[1] == "-l" || arguments[1] == "l" {
