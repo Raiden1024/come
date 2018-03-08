@@ -177,11 +177,11 @@ func main() {
 				if err != nil {
 					fmt.Printf("%v", err)
 				}
-				if ip != "" {
+				if ip != "NO ADDRESS" {
+					fmt.Println(arguments[2] + ": ONLINE")
 					break
 				}
 			}
-			fmt.Println(arguments[2] + ": ONLINE")
 		} else if arguments[1] == "-i" {
 			ip, err := getIP(arguments[2])
 			if err != nil {
