@@ -10,23 +10,18 @@ import (
 	"os/exec"
 )
 
-// Config json
+// Config ... Serialize configuration
 type Config struct {
 	FireToken string `json:"fireToken"`
 	Host      string
 }
 
-// OpenfireSession ... Retrieve Session datas
-type OpenfireSession struct {
-	Session OpenfireDatas `json:"session"`
-}
-
-// OpenfireSession ... Retrieve All Sessions Datas
+// OpenfireSessions ... Retrieve All Sessions
 type OpenfireSessions struct {
 	Sessions []OpenfireDatas `json:"session"`
 }
 
-// OpenfireDatas ... Retrieve Sessions Fields
+// OpenfireDatas ... Retrieve Sessions Datas
 type OpenfireDatas struct {
 	SessionID      string `json:"sessionId"`
 	Username       string `json:"username"`
@@ -47,12 +42,12 @@ var (
 	arguments  = os.Args
 	config     = Config{}
 	usageTxt   = "Usage: come [ARGUMENT] [USER]\n" +
-		"-c ou c    SSH connection to a user machine, ex: come -c <user>\n" +
-		"-i ou i    Display User IP Address, ex: come -i <user>\n" +
-		"-w ou w    Wait for user Online status, ex: come -w <user>\n" +
-		"-l ou l    Display active sessions list\n" +
-		"-v ou v    Print Version\n" +
-		"-h ou h    This help"
+		"-c    SSH connection to a user machine, ex: come -c <user>\n" +
+		"-i    Display User IP Address, ex: come -i <user>\n" +
+		"-w    Wait for user Online status, ex: come -w <user>\n" +
+		"-l    Display active sessions list\n" +
+		"-v    Print Version\n" +
+		"-h    This help"
 )
 
 func init() {
@@ -60,7 +55,7 @@ func init() {
 		fmt.Fprint(os.Stdout, "No configuration found."+
 			"\nTo use 'come' you must have a functional OpenFire Server\n"+
 			"With REST API plugin installed.\n")
-		fmt.Print("openfire server address (format needed: 'http(s)://host(:port)': ")
+		fmt.Print("openfire server address (format needed: 'http(s)://host.domain(:port)': ")
 		entry := bufio.NewScanner(os.Stdin)
 		entry.Scan()
 		hostname := entry.Text()
@@ -96,52 +91,52 @@ func init() {
 		fmt.Fprintf(os.Stderr, "Could not read json file: %v", err)
 	}
 }
-
-func listSessions() error {
+func getAPI() (OpenfireSessions, error) {
 	openfireSessions := OpenfireSessions{}
 	req, err := http.NewRequest("GET", config.Host+"/plugins/restapi/v1/sessions/", nil)
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Authorization", config.FireToken)
 	if err != nil {
-		return err
+		fmt.Printf("Could not get API: %v", err)
 	}
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		return err
+		fmt.Printf("could not request API: %v", err)
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return err
+		fmt.Printf("could not read API: %v", err)
 	}
+
 	json.Unmarshal(body, &openfireSessions)
+	return openfireSessions, nil
+}
+
+func getIP(userid string) (string, error) {
+	ip := "NO ADDRESS"
+	openfireSessions, err := getAPI()
+	if err != nil {
+		fmt.Printf("Could not get IP Address: %v", err)
+	}
+	for _, v := range openfireSessions.Sessions {
+		if v.Username == userid {
+			ip = v.HostAddress
+		}
+	}
+	return ip, nil
+}
+
+func listSessions() error {
+	openfireSessions, err := getAPI()
+	if err != nil {
+		fmt.Printf("Could not get API: %v", err)
+	}
 	for _, v := range openfireSessions.Sessions {
 		fmt.Println(v.Username, v.HostAddress)
 	}
 	return nil
-}
-
-func sshConnect(userid string) (string, error) {
-	openfireSession := OpenfireSession{}
-	req, err := http.NewRequest("GET", config.Host+"/plugins/restapi/v1/sessions/"+userid, nil)
-	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Authorization", config.FireToken)
-	if err != nil {
-		return "", err
-	}
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-	json.Unmarshal(body, &openfireSession)
-	return openfireSession.Session.HostAddress, nil
 }
 
 func main() {
@@ -150,11 +145,11 @@ func main() {
 	} else if len(arguments) > 3 {
 		fmt.Println("Too much parameters")
 	} else if len(arguments) == 2 {
-		if arguments[1] == "-h" || arguments[1] == "h" {
+		if arguments[1] == "-h" {
 			fmt.Println(usageTxt)
-		} else if arguments[1] == "-v" || arguments[1] == "v" {
+		} else if arguments[1] == "-v" {
 			fmt.Println("COME (COnnect ME) - version: 1.1")
-		} else if arguments[1] == "-l" || arguments[1] == "l" {
+		} else if arguments[1] == "-l" {
 			err := listSessions()
 			if err != nil {
 				fmt.Printf("%v", err)
@@ -163,10 +158,10 @@ func main() {
 			fmt.Println("Username missing")
 		}
 	} else if len(arguments) == 3 {
-		if arguments[1] == "-c" || arguments[1] == "c" {
-			ip, err := sshConnect(arguments[2])
+		if arguments[1] == "-c" {
+			ip, err := getIP(arguments[2])
 			if err != nil {
-				fmt.Printf("Unable to establish connection: %v", err)
+				fmt.Printf("Unable to get IP Address: %v", err)
 			}
 			fmt.Println("Waiting for connection...")
 			cmd := exec.Command("ssh", "root@"+ip)
@@ -175,10 +170,10 @@ func main() {
 			cmd.Stderr = os.Stderr
 			cmd.Run()
 
-		} else if arguments[1] == "-w" || arguments[1] == "w" {
+		} else if arguments[1] == "-w" {
 			fmt.Println("Waiting for User Online Status...")
 			for {
-				ip, err := sshConnect(arguments[2])
+				ip, err := getIP(arguments[2])
 				if err != nil {
 					fmt.Printf("%v", err)
 				}
@@ -187,8 +182,8 @@ func main() {
 				}
 			}
 			fmt.Println(arguments[2] + ": ONLINE")
-		} else if arguments[1] == "-i" || arguments[1] == "i" {
-			ip, err := sshConnect(arguments[2])
+		} else if arguments[1] == "-i" {
+			ip, err := getIP(arguments[2])
 			if err != nil {
 				fmt.Printf("Unable to obtain IP address: %v", err)
 			}
