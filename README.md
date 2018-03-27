@@ -9,6 +9,8 @@ It use the REST API plugin of an openfire server to display IP Address of users,
 * 1.1: Migration from Go language to Ruby language
 * 1.0: Initial version
 
+**Last Revision:** Add desktop notification 
+
 ## Installation
 RPM & Deb packages are provides in the repo.
 * RPM package tested with CentOS 7.4 & Fedora 27
