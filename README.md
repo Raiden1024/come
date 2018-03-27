@@ -9,8 +9,10 @@ It use the REST API plugin of an openfire server to display IP Address of users,
 * 1.1: Migration from Go language to Ruby language
 * 1.0: Initial version
 
-## Using "come"
-This git repository contains an RPM Package (for Fedora & centOS: tested on CentOS 7.4). Install it and launch it in command line. 
+## Installation
+RPM & Deb packages are provides in the repo.
+* RPM package tested with CentOS 7.4 & Fedora 27
+* Deb package tested with Ubuntu 16.04 LTS & Ubuntu 17.10
 
 ## Available Options
 * -l or --list - Display active users sessions list
