@@ -2,6 +2,7 @@
 require 'httparty'
 require 'json'
 require 'optparse'
+require 'notify-send'
 
 def create_conf
   begin
@@ -169,6 +170,8 @@ OptionParser.new do |opts|
         end
       end
       puts "#{ARGV[0]}: ONLINE"
+      NotifySend.send "COME Notify", "#{ARGV[0]}: ONLINE"
+      exec("paplay /usr/share/sounds/gnome/default/alerts/glass.ogg")
     end
   }
   opts.on('-v', '--version', 'Print version'){ puts 'COME (COnnectME) - version: 1.2'}
