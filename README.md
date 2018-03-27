@@ -14,6 +14,8 @@ RPM & Deb packages are provides in the repo.
 * RPM package tested with CentOS 7.4 & Fedora 27
 * Deb package tested with Ubuntu 16.04 LTS & Ubuntu 17.10
 
+WARNING: Come will only work actually if you have a correct CA for SSL connection on openfire Server (no self-signed). 
+
 ## Available Options
 * -l or --list - Display active users sessions list
 * -m or --sessions-menu - Display interactive users sessions menu
