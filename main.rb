@@ -171,7 +171,7 @@ OptionParser.new do |opts|
       end
       puts "#{ARGV[0]}: ONLINE"
       NotifySend.send "COME Notify", "#{ARGV[0]}: ONLINE"
-      exec("paplay /usr/share/sounds/gnome/default/alerts/glass.ogg")
+      exec("paplay /usr/local/lib/come/glass.ogg")
     end
   }
   opts.on('-v', '--version', 'Print version'){ puts 'COME (COnnectME) - version: 1.2'}
